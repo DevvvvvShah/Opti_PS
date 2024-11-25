@@ -1,8 +1,9 @@
 from structs import ULD,Package
 from solver import Solver
 import csv
-
-
+import copy
+import random
+import math
 
 k = 5000
 ulds = []
@@ -78,13 +79,75 @@ def metrics(ulds):
     for uld in ulds:
         if uld.isPriority: cost+=k
     
-    print(" Total Cost = ", cost)
+    print("The cost is ",cost)
+    return cost
 
+
+class SimulatedAnnealingSolver:
+    def __init__(self, packages, ulds, initial_temp, cooling_rate, num_iterations):
+        self.packages = packages
+        self.ulds = ulds
+        self.initial_temp = initial_temp
+        self.cooling_rate = cooling_rate
+        self.num_iterations = num_iterations
+        self.k = 5000  # Cost for each ULD containing priority packages
+        priority = []
+
+    def generate_neighbor(self, current_ordering):
+        # random.seed()
+        neighbor = current_ordering[:]
+        for i in range(100):
+            idx1, idx2 = random.sample(range(len(neighbor)), 2)
+            neighbor[idx1], neighbor[idx2] = neighbor[idx2], neighbor[idx1]
+        return neighbor
+
+    def solve(self):
+        
+        temperature = self.initial_temp
+        current_ordering = packages
+        best_ordering = packages
+        best_cost = 100000000
+        current_cost = 100000000
+
+        for iteration in range(self.num_iterations):
+
+            neighbor_ordering = self.generate_neighbor(current_ordering)
+            next_solver = Solver(neighbor_ordering, ulds)
+            next_solver.solve()
+            neighbor_cost =  metrics(next_solver.ulds)
+            delta_cost = neighbor_cost - current_cost
+
+            if delta_cost < 0 or random.uniform(0, 1) < math.exp(-delta_cost / temperature):
+                current_ordering = neighbor_ordering
+                current_cost = neighbor_cost
+
+                if neighbor_cost < best_cost:
+                    best_ordering = neighbor_ordering
+                    best_cost = neighbor_cost
+
+            temperature *= self.cooling_rate  # Update temperature
+
+            print(f"Iteration {iteration}, Current Cost: {current_cost}, Best Cost: {best_cost}")
+            
+        # Return the best ordering and cost found
+        return best_ordering, best_cost
 
 getPackages()
 getULD()
 
+# Initialize parameters
+initial_temp = 10000
+cooling_rate = 0.995
+num_iterations = 50
 
-solver = Solver(packages,ulds)
+sa_solver = SimulatedAnnealingSolver(packages, ulds, initial_temp, cooling_rate, num_iterations)
+best_ordering, best_cost = sa_solver.solve()
+
+# Final packing with the best ordering
+solver = Solver(best_ordering, ulds)
 solver.solve()
-metrics(ulds)
+#metrics(ulds, packages, sa_solver.k)
+
+# solver = Solver(packages,ulds)
+# solver.solve()
+# metrics(ulds)

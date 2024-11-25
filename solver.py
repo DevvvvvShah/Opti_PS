@@ -40,10 +40,10 @@ class Solver:
 
     #select packages to even be considered for packing
     def selectPackages(self):
-        self.economy.sort(key=lambda x: (x.cost/(x.getVolume()+x.weight)),reverse=True)
+        # self.economy.sort(key=lambda x: (x.cost/(x.getVolume()+x.weight)),reverse=True)
         # economyTaking = self.economy
-        economyTaking = self.economy[0:150]
-        self.takenPackages = self.priority + economyTaking
+        # economyTaking = self.economy[0:150]
+        self.takenPackages = self.packages
 
     #fit the packages into the uld
     def fitPackages(self,packages,uld,corners):
@@ -84,7 +84,7 @@ class Solver:
 
     def solve(self):
         self.selectPackages()
-        self.sortPackages(self.takenPackages)
+        # self.sortPackages(self.takenPackages)
         self.sortULDs()
 
         uldMapping = self.assignPackages()
@@ -96,11 +96,10 @@ class Solver:
             [corners, _] = self.fitPackages(uldMapping[uld.id],uld,[[0,0,0]])
             cornermap[uld.id] = corners
         
-        self.sortPackages(self.takenPackages)
+        # self.sortPackages(self.takenPackages)
 
         #see if we can fit the remaining packages into the ulds
         for uld in self.ulds:
             [corners, _] = self.fitPackages(self.takenPackages,uld,cornermap[uld.id])
             cornermap[uld.id] = corners
-
 
