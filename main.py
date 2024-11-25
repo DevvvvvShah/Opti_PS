@@ -86,6 +86,22 @@ def metrics(ulds):
     print(" Total Cost = ", cost)
 
 
+def writeOutput(ulds,packages):
+    
+    f = open("output.csv",mode="w")
+    writer = csv.writer(f)
+    for uld in ulds:
+        uld.packages.sort(key=lambda x: x.position)
+        for package in uld.packages:
+            writer.writerow([package.id,uld.id,package.position,package.position+package.getDimensions()])
+    cost = 0
+    for package in packages:
+        if package.ULD == -1: cost+=package.cost
+    for uld in ulds:
+        if uld.isPriority: cost+=k
+    writer.writerow(["Cost",cost])
+    f.close()
+
 getPackages()
 getULD()
 
@@ -93,3 +109,4 @@ getULD()
 solver = Solver(packages,ulds)
 solver.solve()
 metrics(ulds)
+writeOutput(ulds,packages)
