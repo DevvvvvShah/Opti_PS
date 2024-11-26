@@ -134,17 +134,93 @@ class ULD:
         return valid
     
     def getNewCorners(self,package,corner):
-        dimensions = package.getDimensions()
-        new_corners = [
-            [corner[0] + dimensions[0], corner[1], corner[2]],
-            [corner[0], corner[1] + dimensions[1], corner[2]],
-            [corner[0], corner[1], corner[2] + dimensions[2]],
-            [corner[0] + dimensions[0], corner[1] + dimensions[1], corner[2]],
-            [corner[0] + dimensions[0], corner[1], corner[2] + dimensions[2]],
-            [corner[0], corner[1] + dimensions[1], corner[2] + dimensions[2]],
-            [corner[0] + dimensions[0], corner[1] + dimensions[1], corner[2] + dimensions[2]]
-        ]
-        return new_corners
+        # print(corner, package.getDimensions())
+    
+        extreme_points = set()
+        # print(corner)
+        [x, y, z] = corner
+        [dx, dy, dz] = package.getDimensions()
+        L = self.length
+        W = self.width
+        H = self.height
+
+
+        
+        def project_along_axis(fixed_axis, variable_axis1, variable_axis2,x1,y1,z1):
+            
+            if fixed_axis == "x":
+                fixed, dim, limit = x1, dx, L
+                var1, var2 = y1, z1
+            elif fixed_axis == "y":
+                fixed, dim, limit = y1, dy, W
+                var1, var2 = x1, z1
+            elif fixed_axis == "z":
+                fixed, dim, limit = z1, dz, H
+                var1, var2 = x1, y1
+            else:
+                raise ValueError("Invalid axis!")
+
+            # Initialize projection limit (container boundary)
+            max_extent =  0
+
+            # Check intersection with all packages
+            for pkg in self.packages:
+                
+                px, py, pz = pkg.position
+                pdx,pdy,pdz = pkg.getDimensions()
+
+                # Get the package boundaries
+                pkg_min = {"x": px, "y": py, "z": pz}
+                pkg_max = {"x": px + pdx, "y": py + pdy, "z": pz + pdz}
+
+                # Check if the package intersects the projection plane
+                if pkg_min[variable_axis1] <= var1 < pkg_max[variable_axis1] and \
+                pkg_min[variable_axis2] <= var2 < pkg_max[variable_axis2]:
+                    if pkg_max[fixed_axis] <= fixed:
+                        max_extent = max(max_extent, pkg_max[fixed_axis])  # Blocked by package
+
+            # Return the maximum valid extent
+            return max_extent
+
+        
+        ex1 = project_along_axis("x", "y", "z", x,y+dy,z)  
+        extreme_points.add((ex1, y+dy, z))
+
+        ez1 = project_along_axis("z", "x", "y", x,y+dy,z)  
+        extreme_points.add((x, y+dy, ez1))          
+
+        ex2 = project_along_axis("x", "y", "z", x,y,z+dz)  
+        extreme_points.add((ex2, y,z+dz))
+
+        ey1 = project_along_axis("y", "z", "x", x,y,z+dz)  
+        extreme_points.add((x,ey1,z+dz))     
+
+        ey2 = project_along_axis("y", "z", "x", x+dx,y,z)  
+        extreme_points.add((x+dx,ey2,z))
+
+        ez2 = project_along_axis("z", "x", "y", x+dx,y,z)  
+        extreme_points.add((x+dx, y, ez2))     
+
+        extreme_points.add((x+dx,y,z))
+        extreme_points.add((x,y+dy,z))
+        extreme_points.add((x,y,z+dz))
+        
+        return extreme_points
+
+
+    # def getNewCorners(self,package,corner):
+    #     # print(corner, package.getDimensions())
+    #     dimensions = package.getDimensions()
+    #     new_corners = [
+    #         [corner[0] + dimensions[0], corner[1], corner[2]],
+    #         [corner[0], corner[1] + dimensions[1], corner[2]],
+    #         [corner[0], corner[1], corner[2] + dimensions[2]],
+    #         # [corner[0] + dimensions[0], corner[1] + dimensions[1], corner[2]],
+    #         # [corner[0] + dimensions[0], corner[1], corner[2] + dimensions[2]],
+    #         # [corner[0], corner[1] + dimensions[1], corner[2] + dimensions[2]],
+    #         # [corner[0] + dimensions[0], corner[1] + dimensions[1], corner[2] + dimensions[2]]
+    #     ]
+    #     return new_corners
 
     def clearBin(self):
         for package in self.packages:
