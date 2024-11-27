@@ -166,7 +166,7 @@ getULD()
 
 # Initialize parameters for Tabu Search
 tabu_tenure = 20
-num_iterations = 100
+num_iterations = 10
 
 # Solve using Tabu Search
 ts_solver = TabuSearchSolver(packages, ulds, tabu_tenure, num_iterations)

@@ -1,6 +1,8 @@
 from structs import ULD, Package
 from solver import Solver
 import csv
+from collections import defaultdict
+
 
 k = 5000
 ulds = []
@@ -92,13 +94,74 @@ def metrics(ulds):
     print(" Total Cost = ", cost)
 
 
+# def generateOutput():
+#     f = open("output.csv", mode="w")
+#     outputCSV = csv.writer(f)
+#     packages.sort(key=lambda x: (str(x.ULD), list(x.position)))
+#     for package in packages:
+#         outputCSV.writerow(
+#             [package.id, package.ULD, package.position, package.getDimensions()])
+
+
 def generateOutput():
-    f = open("output.csv", mode="w")
+    f = open("output.csv", mode="w", newline='')
     outputCSV = csv.writer(f)
+
+    # Sort packages for ordered output
     packages.sort(key=lambda x: (str(x.ULD), list(x.position)))
+
+    # Write package details
     for package in packages:
-        outputCSV.writerow(
-            [package.id, package.ULD, package.position, package.getDimensions()])
+        outputCSV.writerow([
+            package.id,
+            package.ULD,
+            package.position,
+            package.weight,
+            package.getDimensions()
+        ])
+
+    # Group packages by ULD
+    uld_packages = defaultdict(list)
+    for package in packages:
+        if package.ULD != -1:  # Ignore unallocated packages
+            uld_packages[package.ULD].append(package)
+
+    # Calculate and write COM for each ULD
+    for uld_id, uld_pkg_list in uld_packages.items():
+        # Get the ULD object and its dimensions
+        uld = next((uld for uld in ulds if uld.id == uld_id), None)
+        if not uld:
+            continue
+
+        total_weight = sum(pkg.weight for pkg in uld_pkg_list)
+        if total_weight == 0:  # Avoid division by zero
+            continue
+
+        # Calculate weighted sum of positions
+        weighted_sum = [0, 0, 0]
+        for pkg in uld_pkg_list:
+            # Package center position = package position + half dimensions
+            center_position = [
+                pkg.position[i] + pkg.getDimensions()[i] / 2 for i in range(3)
+            ]
+            weighted_sum = [
+                weighted_sum[i] + center_position[i] * pkg.weight
+                for i in range(3)
+            ]
+
+        # Calculate COM
+        com = [weighted_sum[i] / total_weight for i in range(3)]
+
+        # Write COM and dimensions of the ULD to the output CSV
+        outputCSV.writerow([
+            f"ULD-{uld_id}",
+            "COM",
+            com,
+            "Dimensions",
+            [uld.length, uld.width, uld.height]
+        ])
+
+    f.close()
 
 
 getPackages()
