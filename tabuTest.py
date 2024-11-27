@@ -9,8 +9,6 @@ k = 5000
 ulds = []
 packages = []
 
-# Function to load packages from a CSV file
-
 
 def getPackages():
     with open("package.csv", mode="r") as f:
@@ -22,8 +20,6 @@ def getPackages():
             else:
                 package = Package(p[1], p[2], p[3], p[4], p[0], p[5])
                 packages.append(package)
-
-# Function to load ULDs from a CSV file
 
 
 def getULD():
@@ -116,23 +112,28 @@ class TabuSearchSolver:
     def generate_neighbor(self, current_ordering):
         """Generate a single neighbor solution."""
         neighbor = current_ordering[:]
-        for _ in range(20):  # Perform 20 random swaps
+        for _ in range(5):  # Perform 20 random swaps
             idx1, idx2 = random.sample(range(len(neighbor)), 2)
             neighbor[idx1], neighbor[idx2] = neighbor[idx2], neighbor[idx1]
         return neighbor
 
     def solve(self):
         """Main Tabu Search optimization logic."""
+        packages.sort(key=lambda x: (x.cost, x.getVolume()), reverse=True)
+        packages.sort(key=lambda x: x.getVolume(), reverse=True)
+        self.ulds.sort(key=lambda x: x.getVolume(), reverse=True)
+        # self.economy.sort(key=lambda x: (
+        #     x.cost / (x.getVolume() + x.weight)), reverse=True)
+
         current_ordering = self.packages
         best_ordering = self.packages
-        best_cost = float('inf')  # Set initial best cost to infinity
-        current_cost = float('inf')  # Set initial current cost to infinity
+        best_cost = float('inf')
+        current_cost = float('inf')
 
         for iteration in range(self.num_iterations):
-            # Generate a neighbor
+
             neighbor_ordering = self.generate_neighbor(current_ordering)
 
-            # Solve and calculate metrics for the neighbor
             next_solver = Solver(neighbor_ordering, self.ulds)
             next_solver.solve()
             neighbor_cost = metrics(next_solver.ulds)

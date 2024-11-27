@@ -1,14 +1,7 @@
+import math
 
-
-# Strategy:
-# greedily pack the boxes into the ULDs
-# sort the ULDs by volume
-# sort the boxes by volume
-# sort the boxes by priority
-# pack the boxes in the ULDs
 
 class Solver:
-
     def __init__(self, packages, ulds):
         self.packages = packages
         self.ulds = ulds
@@ -23,42 +16,56 @@ class Solver:
             else:
                 self.economy.append(package)
 
-    # sorting all the taken packages
-    def sortPackages(self, packages):
-        packages.sort(key=lambda x:
-                      (x.cost, x.getVolume()), reverse=True)
+    # Helper function: Calculate Euclidean distance from (0, 0, 0)
+    # changed
+    def calculateEuclideanDistance(self, point):
+        return math.sqrt(point[0] * 2 + point[1] * 2 + point[2] ** 2)
 
-    # sorting the intra-uld packages
+    # Sort all taken packages
+    def sortPackages(self, packages):
+        # packages.sort(key=lambda x: (x.cost, x.getVolume()), reverse=True)
+        '''not sorting'''
+
+    # Sort the intra-ULD packages
     def sortULDPackages(self, packages):
-        packages.sort(key=lambda x:
-                      (x.getVolume()), reverse=True)
+        # packages.sort(key=lambda x: x.getVolume(), reverse=True)
+        '''not sorting'''
 
     def sortULDs(self):
-        self.ulds.sort(key=lambda x: x.getVolume(), reverse=True)
+        # self.ulds.sort(key=lambda x: x.getVolume(), reverse=True)
+        '''not sorting'''
 
-    # select packages to even be considered for packing
+    # Select packages to even be considered for packing
     def selectPackages(self):
-        # self.economy.sort(key=lambda x: (x.cost/(x.getVolume()+x.weight)),reverse=True)
-        # economyTaking = self.economy
-        economyTaking = self.economy[0:150]
-        self.takenPackages = self.priority
-        self.takenPackages.extend(economyTaking)
+        # self.economy.sort(key=lambda x: (
+        #     x.cost / (x.getVolume() + x.weight)), reverse=True)
+        economyTaking = self.economy[:150]  # Limit number of economy packages
+        self.takenPackages = self.priority + economyTaking
 
-    # fit the packages into the uld
-    def fitPackages(self, packages, uld, corners):
+    # Fit the packages into the ULD
+    def fitPackages(self, packages, uld, corners):  # P : this is fitpackagePriority
         takenPackages = []
+
         for package in packages:
             if package.ULD == -1:
                 done = False
+                # Sort corners by their Euclidean distance from (0, 0, 0)
+                # P : we want to iterate through all corner and rotation and one which will give minimum distance of new corner is taken into account
+                # here we will implement above thing
+
+                corners.sort(key=lambda corner: self.calculateEuclideanDistance(
+                    corner))  # sort on basis of euclidian
                 for corner in corners:
-                    if (uld.addBox(package, corner)):
-                        # remove this corner and add the other 7 corner
+                    if uld.addBox(package, corner):
+                        # Remove this corner and add the other 7 new corners
                         corners.remove(corner)
                         new_corners = uld.getNewCorners(package, corner)
                         corners.extend(new_corners)
-                        # corners.sort(key=lambda x: x[0])
-                        # corners.sort(key=lambda x: x[1])
-                        corners.sort(key=lambda x: x[2])
+
+                        # Re-sort corners by Euclidean distance for the next iteration
+                        corners.sort(
+                            key=lambda x: self.calculateEuclideanDistance(x))
+
                         takenPackages.append(package)
                         done = True
                         break
@@ -66,9 +73,11 @@ class Solver:
                     self.priorityDone += 1
         return corners, takenPackages
 
+    # P : we will define new fitpackageEconomy only difference will be we will iterate through uld,package,corner,rotation rest will be same
+
     def assignPackages(self):
         uldMapping = {}
-        # initial fit for figuring out the assignment of packages to ulds
+        # Initial fit for figuring out the assignment of packages to ULDs
         for uld in self.ulds:
             print("Considering ULD: ", uld.id)
             [_, packagesInULD] = self.fitPackages(
@@ -82,22 +91,22 @@ class Solver:
 
     def solve(self):
         self.selectPackages()
-        # self.sortPackages(self.takenPackages)
+        self.sortPackages(self.takenPackages)
         self.sortULDs()
 
         uldMapping = self.assignPackages()
 
         cornermap = {}
-        # refit the packages into it's uld
+        # Refit the packages into their respective ULD
         for uld in self.ulds:
             self.sortULDPackages(uldMapping[uld.id])
             [corners, _] = self.fitPackages(
                 uldMapping[uld.id], uld, [[0, 0, 0]])
             cornermap[uld.id] = corners
 
-        # self.sortPackages(self.takenPackages)
+        self.sortPackages(self.takenPackages)
 
-        # see if we can fit the remaining packages into the ulds
+        # See if we can fit the remaining packages into the ULDs
         for uld in self.ulds:
             [corners, _] = self.fitPackages(
                 self.takenPackages, uld, cornermap[uld.id])
