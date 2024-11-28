@@ -83,6 +83,17 @@ class Solver:
         
         return uldMapping
     def solve(self):
+        """
+        Solves the packing problem by selecting and fitting packages into ULDs (Unit Load Devices).
+        This method performs the following steps:
+        1. Selects packages to be packed.
+        2. Sorts the selected packages and ULDs.
+        3. Assigns packages to ULDs.
+        4. Fits the assigned packages into their respective ULDs.
+        5. Attempts to fit any remaining packages into the ULDs.
+        Returns:
+            None
+        """
         self.selectPackages()
         self.sortPackages(self.takenPackages)
         self.sortULDs()
