@@ -27,11 +27,14 @@ def container_loading_with_relative_constraints(cartons, containers):
     # Decision variables
     sij = {}  # Binary: carton i assigned to container j
     xi, yi, zi = {}, {}, {}  # Continuous: coordinates of FLB corner of carton i
+    nj = {}
     orientation = {}  # Binary variables for carton orientation (rotation matrix)
     relative_position = {}  # Binary variables for relative positions (aik, bik, cik, dik, eik, fik)
     # Add variables
     x = model.addVar(vtype=GRB.BINARY, name="1")
     model.addConstr(x == 1)
+    for container in containers:
+        nj[container['id']] = model.addVar(vtype=GRB.INTEGER, name=f"n_{container['id']}")
     for carton in cartons:
         for container in containers:
             sij[(carton['id'], container['id'])] = model.addVar(vtype=GRB.BINARY,
@@ -39,7 +42,9 @@ def container_loading_with_relative_constraints(cartons, containers):
         xi[carton['id']] = model.addVar(vtype=GRB.CONTINUOUS, name=f"x_{carton['id']}")
         yi[carton['id']] = model.addVar(vtype=GRB.CONTINUOUS, name=f"y_{carton['id']}")
         zi[carton['id']] = model.addVar(vtype=GRB.CONTINUOUS, name=f"z_{carton['id']}")
-
+        model.addConstr(xi[carton['id']] >= 0)
+        model.addConstr(yi[carton['id']] >= 0)
+        model.addConstr(zi[carton['id']] >= 0)
         # Add 9 binary orientation variables for each carton
         orientation[carton['id']] = {
             "lx": model.addVar(vtype=GRB.BINARY, name=f"lx_{carton['id']}"),
@@ -72,7 +77,9 @@ def container_loading_with_relative_constraints(cartons, containers):
     for carton in cartons:
         model.addConstr(sum(sij[(carton['id'], container['id'])] for container in containers) == 1,
                         name=f"assign_{carton['id']}")
-
+    for container in containers:
+        model.addConstr(sum(sij[(carton['id'], container['id'])] for carton in cartons) <= M*nj[container['id']],
+                        name=f"assign_{container['id']}")
     # 2. Orientation consistency: Each dimension aligns with exactly one axis
     for carton in cartons:
         orients = orientation[carton['id']]
@@ -187,26 +194,6 @@ def container_loading_with_relative_constraints(cartons, containers):
     else:
         print("No feasible solution found.")
 
-# Example usage
-# def isIntersecting2D(package1,package2,x,y):
-#     d1 = package1.getDimensions()
-#     d2 = package2.getDimensions()
-# 
-#     cx1 = package1.position[x] + d1[x]/2
-#     cy1 = package1.position[y] + d1[y]/2
-#     cx2 = package2.position[x] + d2[x]/2
-#     cy2 = package2.position[y] + d2[y]/2
-# 
-#     ix = max(cx1, cx2) - min(cx1, cx2)
-#     iy = max(cy1, cy2) - min(cy1, cy2)
-# 
-#     return ix < (d1[x]+d2[x])/2 and iy < (d1[y]+d2[y])/2
-# 
-# def isIntersecting(self, other):
-#     return (isIntersecting(self, other, Axis.LENGTH, Axis.WIDTH)
-#             and isIntersecting(self, other, Axis.HEIGHT, Axis.WIDTH)
-#             and isIntersecting(self, other, Axis.LENGTH, Axis.HEIGHT))
-
 
 cartons = [
     {"id": "P-365", "length": 88, "width": 95, "height": 110, "weight": 217},
@@ -216,18 +203,18 @@ cartons = [
     {"id": "P-105", "length": 80, "width": 95, "height": 103, "weight": 225},
     {"id": "P-211", "length": 81, "width": 95, "height": 96, "weight": 142},
     {"id": "P-274", "length": 75, "width": 88, "height": 110, "weight": 114},
-    # {"id": "P-356", "length": 77, "width": 95, "height": 99, "weight": 133},
-    # {"id": "P-297", "length": 68, "width": 101, "height": 103, "weight": 149},
-    # {"id": "P-134", "length": 80, "width": 88, "height": 97, "weight": 150},
-    # {"id": "P-300", "length": 69, "width": 97, "height": 101, "weight": 57},
-    # {"id": "P-283", "length": 66, "width": 97, "height": 100, "weight": 79},
-    # {"id": "P-41", "length": 68, "width": 90, "height": 104, "weight": 72},
-    # {"id": "P-145", "length": 75, "width": 79, "height": 106, "weight": 66},
-    # {"id": "P-133", "length": 63, "width": 91, "height": 109, "weight": 174},
-    # {"id": "P-215", "length": 80, "width": 87, "height": 89, "weight": 126},
-    # {"id": "P-277", "length": 54, "width": 105, "height": 108, "weight": 93},
-    # {"id": "P-333", "length": 72, "width": 85, "height": 100, "weight": 59},
-    # {"id": "P-139", "length": 75, "width": 84, "height": 96, "weight": 123},
+    {"id": "P-356", "length": 77, "width": 95, "height": 99, "weight": 133},
+    {"id": "P-297", "length": 68, "width": 101, "height": 103, "weight": 149},
+    {"id": "P-134", "length": 80, "width": 88, "height": 97, "weight": 150},
+    {"id": "P-300", "length": 69, "width": 97, "height": 101, "weight": 57},
+    {"id": "P-283", "length": 66, "width": 97, "height": 100, "weight": 79},
+    {"id": "P-41", "length": 68, "width": 90, "height": 104, "weight": 72},
+    {"id": "P-145", "length": 75, "width": 79, "height": 106, "weight": 66},
+    {"id": "P-133", "length": 63, "width": 91, "height": 109, "weight": 174},
+    {"id": "P-215", "length": 80, "width": 87, "height": 89, "weight": 126},
+    {"id": "P-277", "length": 54, "width": 105, "height": 108, "weight": 93},
+    {"id": "P-333", "length": 72, "width": 85, "height": 100, "weight": 59},
+    {"id": "P-139", "length": 75, "width": 84, "height": 96, "weight": 123},
     # {"id": "P-255", "length": 64, "width": 96, "height": 98, "weight": 78},
     # {"id": "P-73", "length": 63, "width": 86, "height": 104, "weight": 79},
     # {"id": "P-252", "length": 48, "width": 95, "height": 110, "weight": 139},
@@ -240,9 +227,59 @@ cartons = [
     # {"id": "P-49", "length": 40, "width": 69, "height": 100, "weight": 55}
 ]
 containers = [
-    {"id": "U5", "length": 244, "width": 318, "height": 285, "weight": 3500},
-    {"id": "U6", "length": 244, "width": 318, "height": 285, "weight": 3500}
+    {"id": "U5", "length": 244, "width": 318, "height": 285, "weight": 3500}
+    # {"id": "U6", "length": 244, "width": 318, "height": 285, "weight": 3500}
 ]
+def plot(answer):
+    import math
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    import numpy as np
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    def getCube(limits=None):
+        '''get the vertices, edges, and faces of a cuboid defined by its limits
 
+        limits = np.array([[x_min, x_max],
+                        [y_min, y_max],
+                        [z_min, z_max]])
+        '''
+        if limits is None:
+            limits = np.array([[0, 1], [0, 1], [0, 1]])
+        v = np.array([[x, y, z] for x in limits[0] for y in limits[1] for z in limits[2]])
+        e = np.array([[0, 1], [1, 3], [3, 2], [2, 0],
+                      [4, 5], [5, 7], [7, 6], [6, 4],
+                      [0, 4], [1, 5], [2, 6], [3, 7]])
+        f = np.array([[0, 1, 3, 2], [4, 5, 7, 6],
+                      [0, 1, 5, 4], [2, 3, 7, 6],
+                      [0, 2, 6, 4], [1, 3, 7, 5]])
+
+        return v, e, f
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.set_xlim([0, 300])
+    ax.set_ylim([0, 300])
+    ax.set_zlim([0, 300])
+    for package in answer:
+        if package['container_id'] == "U5" :
+            continue
+        x, y, z = package['x'], package['y'], package['z']
+        dx, dy, dz = package['DimX'], package['DimY'], package['DimZ']
+        v, e, f = getCube(np.array([[x, x + dx], [y, y + dy], [z, z + dz]]))
+        ax.plot(*v.T, marker='o', color='k', ls='')
+        for i, j in e:
+            ax.plot(*v[[i, j], :].T, color='r', ls='-')
+        # for i in f:
+        #     if package.stable == -1:
+        #         ax.add_collection3d(Poly3DCollection([v[i]], facecolors='red', linewidths=1, edgecolors='r', alpha=.25))
+        #     elif package.stable:
+        #         ax.add_collection3d(
+        #             Poly3DCollection([v[i]], facecolors='cyan', linewidths=1, edgecolors='r', alpha=.25))
+        #     else:
+            ax.add_collection3d(
+                Poly3DCollection([v[i] for i in f], facecolors='green', linewidths=1, edgecolors='r', alpha=.25))
+
+    plt.show()
 solution = container_loading_with_relative_constraints(cartons, containers)
+plot(solution)
 print("Solution:", solution)
