@@ -2,6 +2,51 @@ import gurobipy as gp
 from gurobipy import GRB
 
 
+def are_cubes_intersecting(obj1, obj2):
+    """
+    Check if two cubes intersect.
+
+    Each cube is defined by its base point (x, y, z) and dimensions (dimX, dimY, dimZ).
+
+    Parameters:
+        cube1: tuple (x1, y1, z1, dimX1, dimY1, dimZ1) for cube 1
+        cube2: tuple (x2, y2, z2, dimX2, dimY2, dimZ2) for cube 2
+
+    Returns:
+        bool: True if the cubes intersect, False otherwise.
+    """
+    if obj1['container_id'] != obj2['container_id']:
+        return False
+    x1 = obj1['x']
+    y1 = obj1['y']
+    z1 = obj1['z']
+    dimX1 = obj1['DimX']
+    dimY1 = obj1['DimY']
+    dimZ1 = obj1['DimZ']
+    x2 = obj2['x']
+    y2 = obj2['y']
+    z2 = obj2['z']
+    dimX2 = obj2['DimX']
+    dimY2 = obj2['DimY']
+    dimZ2 = obj2['DimZ']
+    # Calculate the max and min coordinates for both cubes
+    x1_min, x1_max = x1, x1 + dimX1
+    y1_min, y1_max = y1, y1 + dimY1
+    z1_min, z1_max = z1, z1 + dimZ1
+
+    x2_min, x2_max = x2, x2 + dimX2
+    y2_min, y2_max = y2, y2 + dimY2
+    z2_min, z2_max = z2, z2 + dimZ2
+
+    # Check for overlap on all three axes
+    intersects = (
+            x1_min < x2_max and x1_max > x2_min and  # X-axis overlap
+            y1_min < y2_max and y1_max > y2_min and  # Y-axis overlap
+            z1_min < z2_max and z1_max > z2_min  # Z-axis overlap
+    )
+
+    return intersects
+
 def container_loading_with_relative_constraints(cartons, containers):
     """
     Solve the 3D container loading problem using mixed integer programming,
@@ -22,7 +67,7 @@ def container_loading_with_relative_constraints(cartons, containers):
     model.Params.LogToConsole = 1  # Show optimization logs
 
     # Define constants
-    M = 1000  # Large constant for "big-M" constraints
+    M = 100000  # Large constant for "big-M" constraints
 
     # Decision variables
     sij = {}  # Binary: carton i assigned to container j
@@ -172,23 +217,30 @@ def container_loading_with_relative_constraints(cartons, containers):
         for c in model.getConstrs():
             lhs = model.getRow(c).getValue()
             rhs = c.RHS
-            print(f"{c.ConstrName}: LHS = {lhs}, RHS = {rhs}, Sense = {c.Sense}")
+            # print(f"{c.ConstrName}: LHS = {lhs}, RHS = {rhs}, Sense = {c.Sense}")
         # print(sij["P-365", "U6"].X)
         # print(sij["P-165", "U6"].X)
         model.printQuality()
         solution = []
         # for container in containers:
-        for carton in cartons:
-            solution.append({
-                    "carton_id": carton['id'],
-                    "container_id": container['id'],
-                    "x": xi[carton['id']].X,
-                    "y": yi[carton['id']].X,
-                    "z": zi[carton['id']].X,
-                    "DimX": carton['length'] * orientation[carton['id']]["lx"].X + carton['width'] * orientation[carton['id']]["wx"].X + carton['height'] * orientation[carton['id']]["hx"].X,
-                    "DimY": carton['length'] * orientation[carton['id']]["ly"].X + carton['width'] * orientation[carton['id']]["wy"].X + carton['height'] * orientation[carton['id']]["hy"].X,
-                    "DimZ": carton['length'] * orientation[carton['id']]["lz"].X + carton['width'] * orientation[carton['id']]["wz"].X + carton['height'] * orientation[carton['id']]["hz"].X
-                })
+        # for i in range(len(cartons)):
+        #     for j in range(i + 1, len(cartons)):
+        #         rel = relative_position[(cartons[i]['id'], cartons[j]['id'])]
+        #         print(cartons[i]['id'], cartons[j]['id'], container['id'])
+        #         print(rel["aik"].X, rel["bik"].X, rel["cik"].X, rel["dik"].X, rel["eik"].X, rel["fik"].X)
+        for container in containers:
+            for carton in cartons:
+                if sij[(carton['id'], container['id'])].X > 0.5:
+                    solution.append({
+                            "carton_id": carton['id'],
+                            "container_id": container['id'],
+                            "x": xi[carton['id']].X,
+                            "y": yi[carton['id']].X,
+                            "z": zi[carton['id']].X,
+                            "DimX": carton['length'] * orientation[carton['id']]["lx"].X + carton['width'] * orientation[carton['id']]["wx"].X + carton['height'] * orientation[carton['id']]["hx"].X,
+                            "DimY": carton['length'] * orientation[carton['id']]["ly"].X + carton['width'] * orientation[carton['id']]["wy"].X + carton['height'] * orientation[carton['id']]["hy"].X,
+                            "DimZ": carton['length'] * orientation[carton['id']]["lz"].X + carton['width'] * orientation[carton['id']]["wz"].X + carton['height'] * orientation[carton['id']]["hz"].X
+                        })
                     # Print aik and bik variables
         return solution
     else:
@@ -227,8 +279,8 @@ cartons = [
     # {"id": "P-49", "length": 40, "width": 69, "height": 100, "weight": 55}
 ]
 containers = [
-    {"id": "U5", "length": 244, "width": 318, "height": 285, "weight": 3500}
-    # {"id": "U6", "length": 244, "width": 318, "height": 285, "weight": 3500}
+    {"id": "U5", "length": 244, "width": 318, "height": 285, "weight": 3500},
+    {"id": "U6", "length": 244, "width": 318, "height": 285, "weight": 3500}
 ]
 def plot(answer):
     import math
@@ -261,7 +313,7 @@ def plot(answer):
     ax.set_ylim([0, 300])
     ax.set_zlim([0, 300])
     for package in answer:
-        if package['container_id'] == "U5" :
+        if package['container_id'] == "U6":
             continue
         x, y, z = package['x'], package['y'], package['z']
         dx, dy, dz = package['DimX'], package['DimY'], package['DimZ']
@@ -282,4 +334,10 @@ def plot(answer):
     plt.show()
 solution = container_loading_with_relative_constraints(cartons, containers)
 plot(solution)
+for i in range(len(solution)):
+    for j in range(i+1, len(solution)):
+        if(solution[i]["container_id"] != solution[j]["container_id"]):
+            continue
+        if are_cubes_intersecting(solution[i], solution[j]):
+            print("Cubes intersecting:", solution[i]["carton_id"], solution[j]["carton_id"])
 print("Solution:", solution)
