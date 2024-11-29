@@ -5,6 +5,10 @@ from containers import containers
 cartons = cartons()
 containers = containers()
 from model import container_loading_with_relative_constraints as solver
+# print(len(cartons))
+# print(cartons)
+# print(len(containers))
+# print(containers)
 solution = solver()
 
 def are_cubes_intersecting(obj1, obj2):
@@ -102,6 +106,7 @@ def plot(answer):
     plt.tight_layout()
     plt.show()
 
+
 def is_box_inside_container(box, container):
     """
     Verifies if a box lies completely inside a container.
@@ -114,9 +119,10 @@ def is_box_inside_container(box, container):
             0 <= box['y'] and box['y'] + box['DimY'] <= container['width'] and
             0 <= box['z'] and box['z'] + box['DimZ'] <= container['height'])
 
+
 for i in range(len(solution)):
     for j in range(i + 1, len(solution)):
-        if (solution[i]["container_id"] != solution[j]["container_id"]):
+        if solution[i]["container_id"] != solution[j]["container_id"]:
             continue
         if are_cubes_intersecting(solution[i], solution[j]):
             print("Cubes intersecting:", solution[i]["carton_id"], solution[j]["carton_id"])

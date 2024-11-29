@@ -14,6 +14,7 @@ def containers():
                 "weight": float(row[4])
             }
             containers.append(container)
+    containers.sort(key=lambda x: x['id'])
     return containers
 
 
