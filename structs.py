@@ -319,3 +319,16 @@ class ULD:
             z+=com[2]*weight
         totalWeight = sum([package.weight for package in self.packages])
         return [x/totalWeight,y/totalWeight,z/totalWeight]
+    
+
+class CartonPackage:
+    
+    def __init__(self, id, uldid, position, dimensions, weight, cost, rotation):
+        self.id = id
+        self.uld = uldid
+        self.position = position
+        self.dimensions = dimensions
+        self.weight = weight
+        self.cost = cost
+        self.rotation = rotation
+        self.priority = 1 if uldid == "Priority" else 0
