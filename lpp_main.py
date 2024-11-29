@@ -4,7 +4,7 @@ from cartons import cartons
 from containers import containers
 cartons = cartons()
 containers = containers()
-from model import container_loading_with_relative_constraints as solver
+from model import container_model_with_correct_objectives as solver
 solution = solver()
 
 def are_cubes_intersecting(obj1, obj2):
