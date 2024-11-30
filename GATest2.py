@@ -9,8 +9,6 @@ k = 5000  # Cost for each ULD containing priority packages
 ulds = []
 packages = []
 
-# Read packages from CSV
-
 
 def getPackages():
     f = open("package.csv", mode="r")
@@ -22,8 +20,6 @@ def getPackages():
         else:
             package = Package(p[1], p[2], p[3], p[4], p[0], p[5])
             packages.append(package)
-
-# Read ULDs from CSV
 
 
 def getULD():
@@ -38,7 +34,7 @@ getPackages()
 getULD()
 
 
-# Metrics function
+# Metrics
 def metrics(ulds):
     freeSpace = 0
     totalSpace = 0
@@ -110,7 +106,7 @@ class BRKGA:
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
         self.num_generations = num_generations
-        self.k = 5000  # Cost for each ULD containing priority packages
+        self.k = 5000
         # Early stop if no improvement after this many generations
         self.max_stagnation = max_stagnation
 
@@ -125,15 +121,13 @@ class BRKGA:
 
     def fitness(self, individual):
         """Evaluate the fitness (cost) of a given individual."""
-        # Decode the solution
         # Decoding Box Packing Sequence (BPS)
         bps = np.argsort(individual[:len(self.packages)])
         # Vector of Box Orientations (VBO)
         vbo = individual[len(self.packages):]
-        # Create the Solver with the decoded solution
+
         solver = Solver([self.packages[i] for i in bps], self.ulds)
         solver.solve()
-        # Return the fitness value (lower cost = better)
         return metrics(solver.ulds)
 
     def partition(self, population, fitness_scores):
@@ -168,17 +162,15 @@ class BRKGA:
         return individual
 
     def solve(self):
-        # Initialize population
         population = self.initialize_population()
 
-        # Track the best solution
         best_individual = None
         best_fitness = float('inf')
 
-        stagnation_counter = 0  # Counter for no improvement
+        stagnation_counter = 0
 
         for generation in range(self.num_generations):
-            # Evaluate fitness for each individual
+
             fitness_scores = [self.fitness(individual)
                               for individual in population]
 
@@ -187,11 +179,10 @@ class BRKGA:
                 if score < best_fitness:
                     best_fitness = score
                     best_individual = population[i]
-                    stagnation_counter = 0  # Reset stagnation counter when improvement happens
+                    stagnation_counter = 0
                 else:
-                    stagnation_counter += 1  # Increment stagnation counter when no improvement
+                    stagnation_counter += 1
 
-            # Prevent premature early stopping
             if stagnation_counter >= self.max_stagnation and generation > 5:
                 print(
                     f"Stopping due to stagnation after {generation} generations.")
@@ -209,7 +200,7 @@ class BRKGA:
                 offspring = self.mutate(offspring)
                 new_population.append(offspring)
 
-            population = new_population  # Replace old population with new one
+            population = new_population
 
             print(f"Generation {generation}, Best Fitness: {best_fitness}")
 
@@ -221,20 +212,18 @@ population_size = 10
 elite_size = 2
 crossover_rate = 0.8
 mutation_rate = 0.2
-num_generations = 20  # Set to a reasonable number of generations
-max_stagnation = 5  # Early stop if no improvement for 5 generations
+num_generations = 20
+max_stagnation = 5
 
 # Instantiate the BRKGA solver
 brkga_solver = BRKGA(packages, ulds, population_size,
                      elite_size, crossover_rate, mutation_rate, num_generations, max_stagnation)
 best_ordering, best_cost = brkga_solver.solve()
 
-# Decode the best ordering (random key vector) to get the correct order of packages
-# Decoding Box Packing Sequence (BPS)
+
 bps = np.argsort(best_ordering[:len(packages)])
 ordered_packages = [packages[i]
-                    for i in bps]  # Reorganize packages according to BPS
+                    for i in bps]
 
-# Now, pass the ordered list of packages to the Solver
 solver = Solver(ordered_packages, ulds)
 solver.solve()
