@@ -173,10 +173,14 @@ class ULD:
             #     minEucdist = dist
             #     bestRotation = rotation
 
+
+            # for axis in Axis.ALL:
+            #     if self.project(currPackage,axis) != -1:
+            #         currPackage.position[axis] = self.project(currPackage,axis)
+            
             # check for stability?
-            for axis in Axis.ALL:
-                if self.project(currPackage,axis) != -1:
-                    currPackage.position[axis] = self.project(currPackage,axis)
+            if not self.checkStabilityPackage(currPackage):
+                continue
     
             #update uld criteria if needed for solver
             currPackage.ULD = self.id
@@ -270,7 +274,7 @@ class ULD:
         for otherPackage in self.packages:
             if package == otherPackage: continue
             otherPackageDimensions = otherPackage.getDimensions()
-            if packageBase != otherPackage.position[2] + otherPackageDimensions[2]: continue
+            if abs(packageBase - (otherPackage.position[2] + otherPackageDimensions[2])) > 0: continue
             otherPackageRectangle = [otherPackage.position[0],otherPackage.position[1],otherPackage.position[0]+otherPackageDimensions[0],otherPackage.position[1]+otherPackageDimensions[1]]
             maxOverlap += getOverlap(packageRectangle,otherPackageRectangle)
         

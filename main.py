@@ -93,10 +93,10 @@ def metrics(ulds):
 
 def generateOutput():
     f = open("output.csv", mode="w")
-    outputCSV = csv.writer(f)
+    outputCSV = csv.writer(f,lineterminator="\n")
     packages.sort(key=lambda x: (str(x.ULD),list(x.position)))
     for package in packages:
-        outputCSV.writerow([package.id,package.ULD,package.position,package.getDimensions()])
+        outputCSV.writerow([package.id,package.ULD,package.position,package.getDimensions(), package.weight, package.cost, package.rotation])
 
 getPackages()
 getULD()
@@ -105,4 +105,5 @@ getULD()
 solver = Solver(packages,ulds)
 solver.solve()
 metrics(ulds)
+ulds[-1].plotULD()
 generateOutput()
