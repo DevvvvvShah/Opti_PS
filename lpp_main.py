@@ -4,8 +4,19 @@ from cartons import cartons
 from containers import containers
 cartons = cartons()
 containers = containers()
-from model import container_model_with_correct_objectives as solver
-solution = solver()
+from model import container_loading_with_relative_constraints as solver
+# solution = solver()
+
+new_cartons = []
+containers = []
+cost_reduction = 0
+
+from binsearch import get_more_packages
+file_path = 'greedyOutput.csv'
+# get_containers()
+container_assigned = {container['id']: [] for container in containers}
+# assign(file_path)
+solution = get_more_packages(file_path)
 
 def are_cubes_intersecting(obj1, obj2):
     """
@@ -125,6 +136,7 @@ for i in range(len(solution)):
         if solution[i]['container_id'] == containers[j]['id']:
             if is_box_inside_container(solution[i], containers[j]) == 0:
                 print(f"out of range ! carton : {solution[i]['carton_id']}")
+                
 print("Found a valid solution: ")
 print(solution)
 plot(solution)
