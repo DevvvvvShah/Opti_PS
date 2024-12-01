@@ -129,6 +129,8 @@ for i in range(len(solution)):
     for j in range(i + 1, len(solution)):
         if (solution[i]["container_id"] != solution[j]["container_id"]):
             continue
+        if (solution[i]["container_id"] == -1):
+            continue
         if are_cubes_intersecting(solution[i], solution[j]):
             print("Cubes intersecting:", solution[i]["carton_id"], solution[j]["carton_id"])
 for i in range(len(solution)):

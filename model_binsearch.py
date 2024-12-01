@@ -187,11 +187,25 @@ def container_loading_with_relative_constraints(cartons, containers):
     # model.setParam('Cuts', 2)           # Use aggressive cuts to prune the search space
     model.optimize()
     if model.status == GRB.OPTIMAL:
-        return 1
+        solution = []
+        for container in containers:
+            for carton in cartons:
+                if sij[(carton['id'], container['id'])].X > 0.5:
+                    solution.append({
+                            "carton_id": carton['id'],
+                            "container_id": container['id'],
+                            "x": xi[carton['id']].X,
+                            "y": yi[carton['id']].X,
+                            "z": zi[carton['id']].X,
+                            "DimX": carton['length'] * orientation[carton['id']]["lx"].X + carton['width'] * orientation[carton['id']]["wx"].X + carton['height'] * orientation[carton['id']]["hx"].X,
+                            "DimY": carton['length'] * orientation[carton['id']]["ly"].X + carton['width'] * orientation[carton['id']]["wy"].X + carton['height'] * orientation[carton['id']]["hy"].X,
+                            "DimZ": carton['length'] * orientation[carton['id']]["lz"].X + carton['width'] * orientation[carton['id']]["wz"].X + carton['height'] * orientation[carton['id']]["hz"].X
+                        })
+        return solution
     # print(len(cartons))
     # print(cartons)
     # print(containers)
-    return 0
+    
     
 
     # Extract the solution
