@@ -9,6 +9,7 @@ new_solution = []
 container_wise_solution = {}
 container_assigned = []
 same_assignment_cartons = []
+extra_fitted_cartons = []
 
 cost_reduction = 0
 
@@ -58,7 +59,9 @@ def get_more_packages(file_path):
                             'length': dimensions[0],
                             'width': dimensions[1],
                             'height': dimensions[2],
-                            'weight': int(row[4])
+                            'weight': int(row[4]),
+                            'cost' : int(row[5]),
+                            'Priority': row[7]   
                         }
                     )
                     container['free_space'] -= dimensions[0] * dimensions[1] * dimensions[2]
@@ -80,7 +83,8 @@ def get_more_packages(file_path):
                         'width': dimensions[1],
                         'height': dimensions[2],
                         'weight': int(row[4]),
-                        'cost': int(row[5])
+                        'cost': int(row[5]),
+                        'Priority': row[7]
                     }
                 )
     new_cartons = sorted(new_cartons, key=lambda x: (floor((x['length']*x['width']*x['height'])/100),min(x['length'],x['width'],x['height']),x['weight'],x['cost']))
@@ -91,6 +95,7 @@ def get_more_packages(file_path):
             container_assigned[container['id']].append(i)
             obtained_solution = solver(container_assigned[container['id']], [container])
             if obtained_solution:
+                extra_fitted_cartons.append(i['id'])
                 container_lists[container['id']].append(i)
                 cost_reduction += i['cost']
                 container['free_space'] -= i['length'] * i['width'] * i['height']
@@ -121,12 +126,25 @@ def get_more_packages(file_path):
 get_more_packages(file_path)
 print("done")
 
+weight_cost_priority_info = {}
+with open(file_path, mode='r') as file:
+    csv_reader = csv.reader(file)
+    for row in csv_reader:
+        if not ' '.join(row).strip():
+            continue
+        weight_cost_priority_info[row[0]] = [int(row[4]), int(row[5]), row[7]]
+
+
+
 added_cartons = {}
 for every_container in container_wise_solution:
     print("Container ", every_container, "was modified")
     same_assignment_cartons.remove(every_container)
     added_cartons[every_container] = 1
     for assignment in container_wise_solution[every_container]:
+        assignment['weight'] = weight_cost_priority_info[assignment['carton_id']][0]
+        assignment['cost'] = weight_cost_priority_info[assignment['carton_id']][1]
+        assignment['Priority'] = weight_cost_priority_info[assignment['carton_id']][2]
         new_solution.append(assignment)
 
 
@@ -135,7 +153,7 @@ with open(file_path, mode='r') as file:
     for row in csv_reader:
         if not ' '.join(row).strip():
             continue    
-        if row[1] in same_assignment_cartons:
+        if row[1] not in added_cartons and row[0] not in extra_fitted_cartons:
             carton = {
                 "carton_id": row[0],
                 "container_id": row[1],
@@ -144,7 +162,10 @@ with open(file_path, mode='r') as file:
                 "z": eval(row[2])[2],
                 "DimX": eval(row[3])[0],
                 "DimY": eval(row[3])[1],
-                "DimZ": eval(row[3])[2]
+                "DimZ": eval(row[3])[2],
+                "weight": int(row[4]),
+                "cost": int(row[5]),
+                "Priority": row[7]
             }
             new_solution.append(carton)
 
