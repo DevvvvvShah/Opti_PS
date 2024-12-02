@@ -182,7 +182,7 @@ def container_loading_with_relative_constraints(cartons, containers):
     # model.setParam('MIPFocus', 1)       # Focus on feasible solutions quickly
     # model.setParam('Heuristics', 0.5)   # Use heuristics for faster solution
     # model.setParam('NodeLimit', 1000)   # Limit nodes explored to 1000
-    model.setParam('TimeLimit', 20)    # Stop after 120 seconds
+    model.setParam('TimeLimit', 60)    # Stop after 120 seconds
     # model.setParam('SolutionLimit', 1)  # Stop after finding one feasible solution
     # model.setParam('Cuts', 2)           # Use aggressive cuts to prune the search space
     model.optimize()

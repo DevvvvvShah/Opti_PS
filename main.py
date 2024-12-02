@@ -8,6 +8,8 @@ from LPP.model import all_swaps as solver
 from LPP.package_to_carton import get_from_greedy
 from binsearch.binsearch import binsearch
 from utils.lpp_utils import are_cubes_intersecting, is_box_inside_container, plot
+from utils.metrics import metrics
+
 
 
 
@@ -26,41 +28,52 @@ def generateOutput(packages):
     for package in packages:
         outputCSV.writerow([package.id,package.ULD,package.position,package.getDimensions(),package.weight,package.cost,package.rotation,package.priority])
 
-getPackages(packages)
-getULD(ulds)
+mincost=100000000000000000000
 
-solver2 = Solver2(packages,ulds)
-solver2.solve()
+best29556perms = [13,17,19,23]
 
-generateOutput(packages)
-cartons = cartons()
-containers = containers()
+for i in range(0,4):
+    perm=best29556perms[i]
+    packages = []
+    ulds = []
+    getPackages(packages)
+    getULD(ulds)
+    solver2 = Solver2(packages,ulds,perm)
+    solver2.solve(perm)
+    generateOutput(packages)
+    mincost=min(mincost,metrics(packages,ulds,k))
+    print(mincost)
+    print(perm)
+
+    cartons = cartons()
+    containers = containers()
 
 
-binsearchSolution = binsearch(packageArray=packages, uldArray=ulds)
-newPackages = sol_to_package(binsearchSolution)
+    binsearchSolution = binsearch(packageArray=packages, uldArray=ulds)
+    newPackages = sol_to_package(binsearchSolution)
 
 
-generateOutput(newPackages)
+    generateOutput(newPackages)
 
-init = get_from_greedy(packageArray=newPackages)
-solution = solver(cartons=cartons, containers=containers, init=init)
+    init = get_from_greedy(packageArray=newPackages)
+    solution = solver(cartons=cartons, containers=containers, init=init)
 
-generateOutput(sol_to_package(solution))
+    generateOutput(sol_to_package(solution))
 
-for i in range(len(solution)):
-    for j in range(i + 1, len(solution)):
-        if (solution[i]["container_id"] != solution[j]["container_id"]):
-            continue
-        if (solution[i]["container_id"] == -1):
-            continue
-        if are_cubes_intersecting(solution[i], solution[j]):
-            print("Cubes intersecting:", solution[i]["carton_id"], solution[j]["carton_id"])
-for i in range(len(solution)):
-    for j in range(len(containers)):
-        if solution[i]['container_id'] == containers[j]['id']:
-            if is_box_inside_container(solution[i], containers[j]) == 0:
-                print(f"out of range ! carton : {solution[i]['carton_id']}")
 
-plot(solution)
-print(solution)
+    for i in range(len(solution)):
+        for j in range(i + 1, len(solution)):
+            if (solution[i]["container_id"] != solution[j]["container_id"]):
+                continue
+            if (solution[i]["container_id"] == -1):
+                continue
+            if are_cubes_intersecting(solution[i], solution[j]):
+                print("Cubes intersecting:", solution[i]["carton_id"], solution[j]["carton_id"])
+    for i in range(len(solution)):
+        for j in range(len(containers)):
+            if solution[i]['container_id'] == containers[j]['id']:
+                if is_box_inside_container(solution[i], containers[j]) == 0:
+                    print(f"out of range ! carton : {solution[i]['carton_id']}")
+
+    plot(solution)
+    print(solution)

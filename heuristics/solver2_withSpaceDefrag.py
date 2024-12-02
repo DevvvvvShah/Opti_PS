@@ -3,7 +3,7 @@ import math
 from utils.structs import Axis
 
 class Solver2:
-    def __init__(self, packages, ulds):
+    def __init__(self, packages, ulds, permutation):
         self.packages = packages
         self.ulds = ulds
         self.priority = []
@@ -35,9 +35,21 @@ class Solver2:
     
     def sortULDPackages(self, packages):
         packages.sort(key=lambda x: (math.floor(x.getDimensions()[2]/10),(x.getVolume())/(x.getDimensions()[2])), reverse=True)
+    
+    permuationsAll = [[4,5,6,1,2,3],[4,5,6,2,3,1],[4,5,6,3,1,2],[4,5,6,1,3,2],[4,5,6,2,1,3],[4,5,6,3,2,1],
+                      [4,6,5,1,2,3],[4,6,5,2,3,1],[4,6,5,3,1,2],[4,6,5,1,3,2],[4,6,5,2,1,3],[4,6,5,3,2,1],
+                      [5,4,6,1,2,3],[5,4,6,2,3,1],[5,4,6,3,1,2],[5,4,6,1,3,2],[5,4,6,2,1,3],[5,4,6,3,2,1],    
+                      [5,6,4,1,2,3],[5,6,4,2,3,1],[5,6,4,3,1,2],[5,6,4,1,3,2],[5,6,4,2,1,3],[5,6,4,3,2,1],
+                      [6,4,5,1,2,3],[6,4,5,2,3,1],[6,4,5,3,1,2],[6,4,5,1,3,2],[6,4,5,2,1,3],[6,4,5,3,2,1],
+                      [6,5,4,1,2,3],[6,5,4,2,3,1],[6,5,4,3,1,2],[6,5,4,1,3,2],[6,5,4,2,1,3],[6,5,4,3,2,1]]                      
 
-    def sortULDs(self):
-        self.ulds.sort(key=lambda x: x.getWeight(), reverse=True)
+    def sortULDs(self,permutation):
+        currPermutation=self.permuationsAll[permutation]
+       
+        mapuldtoperm = {"U4": currPermutation[0], "U5": currPermutation[1], "U6": currPermutation[2], "U1": currPermutation[3], "U2": currPermutation[4], "U3": currPermutation[5]}   
+        #print(self.ulds)
+
+        self.ulds.sort(key=lambda x: mapuldtoperm[x.id], reverse=True)
 
 
     def fitPackages(self, packages, uld, corners, isassigning = 0):# P : this is fitpackagePriority
@@ -73,7 +85,7 @@ class Solver2:
                     
         # uld.plotULD()
 
-        print(len(takenPackages))        
+        #print(len(takenPackages))        
         return corners, takenPackages
     
     # P : we will define new fitpackageEconomy only difference will be we will iterate through uld,package,corner,rotation rest will be same
@@ -83,7 +95,7 @@ class Solver2:
         # Initial fit for figuring out the assignment of packages to ULDs
         priority_bin = 3
         for uld in self.ulds:
-            print("Assigning Priorty ULD: ", uld.id)
+            #print("Assigning Priorty ULD: ", uld.id)
             # print(uld.length,uld.width,uld.height)
             [_, packagesInULD] = self.fitPackages(self.packages, uld, [[0, 0, 0]],True)
             c = 0
@@ -107,7 +119,7 @@ class Solver2:
             if(priority_bin!=0):
                 priority_bin-=1
                 continue
-            print("Assigning Normal ULD: ", uld.id)
+            #print("Assigning Normal ULD: ", uld.id)
             [_, packagesInULD] = self.fitPackages(self.packages, uld, [[0, 0, 0]],True)
             self.takenPackages.extend(packagesInULD)
         
@@ -125,7 +137,7 @@ class Solver2:
     def fit_int_ulds(self,packages,ulds,cornermap,mess):
         for ii,uld in enumerate(ulds):
             
-            print("Fitting " +  mess + " ULD: ", uld.id)
+            #print("Fitting " +  mess + " ULD: ", uld.id)
             [corners, _] = self.fitPackages(packages, uld, cornermap[uld.id])
             done = False
             cornermap[uld.id] = corners
@@ -144,10 +156,10 @@ class Solver2:
            
         return cornermap
 
-    def solve(self):
+    def solve(self,permutation):
 
         self.sortPackagesAssignment(self.packages)
-        self.sortULDs()
+        self.sortULDs(permutation)
 
         self.assignPackagesPriority()
 
@@ -190,3 +202,5 @@ class Solver2:
         # self.ulds[5].plotULD()
 
 
+# 4,13,15,17,19,20,21,23,
+# 23,19,17,13

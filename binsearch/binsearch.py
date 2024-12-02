@@ -21,10 +21,16 @@ def binsearch(file_path = None, packageArray = None, uldArray = None):
         same_assignment_cartons = []
         extra_fitted_cartons = []
         cost_reduction = 0
-
+        print("xxxxxxxxxxxxytewrsfd")
+        print(uldArray)
+        free_list=["U1","U2","U6"]
 
         if file_path is None:
             for container in uldArray:
+
+                if container.id not in free_list:
+                    continue
+
                 container = {
                     "id": container.id,
                     "length": container.length,
@@ -50,7 +56,7 @@ def binsearch(file_path = None, packageArray = None, uldArray = None):
                     same_assignment_cartons.append(container['id'])
                     container['free_space'] = container['length'] * container['width'] * container['height']
                     containers.append(container)
-
+        print(containers)
         container_assigned = {container['id']: [] for container in containers}
         container_lists = {container['id']: [] for container in containers}
 
@@ -72,7 +78,7 @@ def binsearch(file_path = None, packageArray = None, uldArray = None):
                     new_cartons.append(new_package)
                     print(new_package)
 
-                else:
+                elif package.ULD in free_list:
                     new_package = {
                         "id": package.id,
                         "length": package.dimensions[0],
@@ -133,8 +139,8 @@ def binsearch(file_path = None, packageArray = None, uldArray = None):
         
 
         old_new_cartons = new_cartons
-        new_cartons = sorted(new_cartons, key=lambda x: (floor((x['length']*x['width']*x['height'])/100),min(x['length'],x['width'],x['height']),x['weight'],x['cost']))
-        new_cartons = new_cartons[:5]
+        new_cartons = sorted(new_cartons, key=lambda x: (floor((x['length']*x['width']*x['height'])/100),-x['cost'],min(x['length'],x['width'],x['height'])))
+        new_cartons = new_cartons[:25]
 
         if file_path is None:
             for container in container_assigned:
