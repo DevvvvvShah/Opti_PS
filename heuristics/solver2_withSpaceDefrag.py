@@ -3,13 +3,14 @@ import math
 from utils.structs import Axis
 
 class Solver2:
-    def __init__(self, packages, ulds):
+    def __init__(self, packages, ulds,isDeciding = False):
         self.packages = packages
         self.ulds = ulds
         self.priority = []
         self.economy = []
         self.takenPackages = []
         self.priorityULDs =  0
+        self.isDeciding = isDeciding
 
         for package in packages:
             if package.priority == "Priority":
@@ -98,7 +99,7 @@ class Solver2:
                     
         # uld.plotULD()
 
-        print(len(takenPackages))        
+        # print(len(takenPackages))        
         return corners, takenPackages
     
     # P : we will define new fitpackageEconomy only difference will be we will iterate through uld,package,corner,rotation rest will be same
@@ -108,7 +109,7 @@ class Solver2:
         cm = {}
         for uld in ulds:
             cm[uld.id] = [[0, 0, 0]]
-            print("Assigning Priorty ULD: ", uld.id)
+            # print("Assigning Priorty ULD: ", uld.id)
             [_, packagesInULD] = self.fitPackages(self.packages, uld, [[0, 0, 0]],True)
             self.takenPackages.extend(packagesInULD)
             priority_done = self.isPriorityDone()
@@ -132,7 +133,7 @@ class Solver2:
         # cm = {}
         for i in ulds:
             # cm[i.id] = [[0, 0, 0]]
-            print("Assigning Normal ULD: ", i.id)
+            # print("Assigning Normal ULD: ", i.id)
             [_, packagesInULD] = self.fitPackages(self.packages, i, [[0, 0, 0]],True)
             self.takenPackages.extend(packagesInULD)
         # [_,takenPackages] = self.fit_int_ulds(self.packages, ulds, cm,"Assigning Normal")
@@ -149,7 +150,7 @@ class Solver2:
         takenPackages = []
         for ii,uld in enumerate(ulds):
             
-            print(mess + " ULD: ", uld.id)
+            # print(mess + " ULD: ", uld.id)
             [corners, taken_pck] = self.fitPackages(packages, uld, cornermap[uld.id])
             done = False
             cornermap[uld.id] = corners
@@ -177,8 +178,8 @@ class Solver2:
         return cornermap,takenPackages
 
     def solve(self):
-
-        self.sortPackagesAssignment(self.packages)
+        if(not self.isDeciding):
+            self.sortPackagesAssignment(self.packages)
         self.sortULDs(13)
 
         self.assignPackagesPriority()

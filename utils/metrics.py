@@ -63,13 +63,13 @@ def metrics(packages, ulds,k):
 
     for package in packages:
         packagesTotal+=1
-        if package.ULD != -1: packagesTotalTaken+=1
+        if str(package.ULD) != '-1': packagesTotalTaken+=1
         if package.priority == "Priority":
             packagesPriority+=1
-            if package.ULD != -1: packagesPriorityTaken+=1
+            if str(package.ULD) != '-1': packagesPriorityTaken+=1
         else:
             packagesEconomy+=1
-            if package.ULD != -1: packagesEconomyTaken+=1
+            if str(package.ULD) != '-1': packagesEconomyTaken+=1
 
     print("{0} out of {1} packages taken".format(packagesTotalTaken,packagesTotal))
     print("{0} out of {1} priority packages taken".format(packagesPriorityTaken,packagesPriority))
@@ -81,7 +81,7 @@ def metrics(packages, ulds,k):
     
     cost = 0
     for package in packages:
-        if package.ULD == -1: cost+=package.cost
+        if str(package.ULD) == '-1': cost+=package.cost
     print("Cost without accounting for priority uld (k) = ", cost)
     for uld in ulds:
         if uld.isPriority: cost+=k
